@@ -1,36 +1,71 @@
 import pandas as pd
 import requests
 
-def acquire(link, target):
-    '''
-    Function takes in: 
-    link = url
-    target = endpoint
-    '''
-    response = requests.get(link)
 
-    data = response.json()
 
-    return pd.DataFrame(data['payload'][target])
 
-while True:
-    url = base_url + endpoint
-    response = requests.get(url)
-    data = response.json()
-    print(f'Getting page {data['payload']['page']} of {data['payload'][]}
-    items.extend(data['payload']['items']
-    endpoint = data['payload']['next_page']
-    if endpoint is None:
-                 break
-def add_pages(df, base_url, target, n):
-    for i in range(2,n):
-    point = f'/api/v1/{target}?page={i}'
-    response = requests.get(base_url + point)
-    data = response.json()
+def get_items_data():
+    base_url = 'https://python.zgulde.net'         
+    endpoint = '/api/v1/items'
+    items = []
 
-    current_page = data['payload']['page']
-    max_page = data['payload']['max_page']
-    next_page = data['payload']['next_page']
+    while True:
+        url = base_url + endpoint
+        response = requests.get(url)
+        data = response.json()
+        items.extend(data['payload']['items'])
+        endpoint = data['payload']['next_page']
+        if endpoint is None:
+            break
+                 
+    items_df = pd.DataFrame(items)
+    return items_df
+            
+            
+            
+def get_shop_data():
+    base_url = 'https://python.zgulde.net'         
+    endpoint = '/api/v1/stores'
+    stores = []
+
+    while True:
+        url = base_url + endpoint
+        response = requests.get(url)
+        data = response.json()
+        stores.extend(data['payload']['stores'])
+        endpoint = data['payload']['next_page']
+        if endpoint is None:
+            break
     
+    stores_df = pd.DataFrame(stores)
+    return stores_df
 
-    df = pd.concat([df, pd.DataFrame(data['payload'][f'{target}'])])
+            
+def get_sales_data():
+    base_url = 'https://python.zgulde.net'         
+    endpoint = '/api/v1/sales'
+    sales = []
+
+    while True:
+        url = base_url + endpoint
+        response = requests.get(url)
+        data = response.json()
+        sales.extend(data['payload']['sales'])
+        endpoint = data['payload']['next_page']
+        if endpoint is None:
+            break
+    
+    sales_df = pd.DataFrame(sales)
+    return sales_df
+
+def get_store_data():
+    items_df = get_items_data()
+    stores_df = get_shop_data()
+    sales_df = get_sales_data()
+    
+    sales_df = sales_df.rename(columns={'item': 'item_id', 'store': 'store_id'})
+    df = pd.merge(sales_df, items_df, how='left', on='item_id')
+    df = pd.merge(df, stores_df, how='left', on='store_id')
+    
+    return df
+    
